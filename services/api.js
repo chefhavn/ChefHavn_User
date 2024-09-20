@@ -203,3 +203,17 @@ export const getBookingsByUserId = async customerId => {
     throw error;
   }
 };
+
+export const getRecentBookingByUserId = async customerId => {
+  console.log(customerId)
+  try {
+    const response = await axiosInstance.get(
+      `/api/booking/recent/${customerId}`
+    );
+    return response;
+  } catch (error) {
+    console.error('Error fetching recent booking:', error);
+    throw error;
+  }
+};
+

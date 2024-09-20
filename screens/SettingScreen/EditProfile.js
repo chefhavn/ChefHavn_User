@@ -35,6 +35,7 @@ const EditProfile = ({navigation}) => {
   }, [user]);
 
   const handleSaveChanges = async () => {
+    console.log(user)
     try {
       if (user && user.id) {
         const userData = {name, email, phone};

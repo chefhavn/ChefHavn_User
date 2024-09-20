@@ -5,24 +5,44 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   Image,
 } from 'react-native';
-import Colors from '../../utils/Colors';
-import {login} from '../../services/api';
 import Toast from 'react-native-toast-message';
+import Colors from '../../utils/Colors';
+import {sendOtp, login} from '../../services/api';
 import {UserContext} from '../../context/UserContext';
 
 const OTPScreen = ({route, navigation}) => {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Initially true while loading OTP
   const [resendTimer, setResendTimer] = useState(60);
   const [resendDisabled, setResendDisabled] = useState(true);
   const inputRefs = useRef([]);
   const [selectedInput, setSelectedInput] = useState(null);
   const {loginUser} = useContext(UserContext);
   const {email, phoneNumber, loginWithEmail} = route.params;
+  const [sentOtp, setSentOtp] = useState(null);
+
+  useEffect(() => {
+    // Call sendOtp API when the component mounts
+    const fetchOtp = async () => {
+      try {
+        const response = await sendOtp(email, phoneNumber, loginWithEmail);
+        setSentOtp(response.otp); // Save the OTP for comparison
+        setLoading(false); // OTP is now loaded
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to send OTP. Please try again.',
+        });
+        setLoading(false); // OTP request failed, stop loading
+      }
+    };
+
+    fetchOtp();
+  }, [email, phoneNumber, loginWithEmail]);
 
   useEffect(() => {
     if (resendDisabled && resendTimer > 0) {
@@ -49,77 +69,137 @@ const OTPScreen = ({route, navigation}) => {
 
   const handleOtpVerification = async () => {
     const enteredOtp = otp.join('');
-  
-    // Simulate OTP verification
-    if (enteredOtp === '1234') {
-      setLoading(true);
-      try {
-        const response = await login(email, phoneNumber, loginWithEmail);
-  
-        if (response.success) {
-          const userData = {
-            token: response.token,
-            name: response.user.name,
-            id: response.user.id,
-            email: response.user.email || email,
-            phone: response.user.phone,
-            role: response.user.role,
-          };
-  
-          // Await the context update (in case loginUser is asynchronous)
-          await loginUser(userData);
-  
-          // Show success toast
-          Toast.show({
-            type: 'success',
-            text1: 'Login Successful',
-            text2: 'You have been logged in successfully!',
-            visibilityTime: 1000,
-            position: 'top',
-            topOffset: 50,
-            textStyle: { color: '#503A73' },
-          });
-  
-          // Navigate to HomeTab immediately after updating context
-          navigation.navigate('HomeTab');
-  
+    setLoading(true);
+    try {
+      if (loginWithEmail) {
+        if (enteredOtp === sentOtp) {
+          // Assume login logic here
+          // Simulate successful login
+          const response = await login(email, phoneNumber, loginWithEmail);
+
+          if (response.success) {
+            const userData = {
+              token: response.token,
+              name: response.user.name,
+              id: response.user.id,
+              email: response.user.email || email,
+              phone: response.user.phone,
+              role: response.user.role,
+            };
+
+            await loginUser(userData);
+
+            Toast.show({
+              type: 'success',
+              text1: 'Login Successful',
+              text2: 'You have been logged in successfully!',
+              visibilityTime: 1000,
+              position: 'top',
+              topOffset: 50,
+              textStyle: {color: '#503A73'},
+            });
+
+            navigation.navigate('HomeTab');
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'OTP Verification Failed',
+              text2: response.message || 'Invalid OTP',
+            });
+          }
         } else {
-          throw new Error(response.message || 'Login failed');
+          Toast.show({
+            type: 'error',
+            text1: 'OTP Verification Failed',
+            text2: 'Invalid OTP',
+          });
         }
-      } catch (error) {
-        Toast.show({
-          type: 'error',
-          text1: 'Login Failed',
-          text2: 'Something went wrong, please try again.',
-        });
-      } finally {
-        setLoading(false);
+      } else {
+        // For phone number-based OTP
+        if (enteredOtp === '1234') {
+          // Assume login logic here
+          // Simulate successful login
+          const response = await login(email, phoneNumber, loginWithEmail);
+
+          if (response.success) {
+            const userData = {
+              token: response.token,
+              name: response.user.name,
+              id: response.user.id,
+              email: response.user.email || email,
+              phone: response.user.phone,
+              role: response.user.role,
+            };
+
+            await loginUser(userData);
+
+            Toast.show({
+              type: 'success',
+              text1: 'Login Successful',
+              text2: 'You have been logged in successfully!',
+              visibilityTime: 1000,
+              position: 'top',
+              topOffset: 50,
+              textStyle: {color: '#503A73'},
+            });
+
+            navigation.navigate('HomeTab');
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'Login Failed',
+              text2: response.message || 'Something went wrong',
+            });
+          }
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'OTP Verification Failed',
+            text2: 'Invalid OTP',
+          });
+        }
       }
-    } else {
+    } catch (error) {
       Toast.show({
         type: 'error',
-        text1: 'OTP Verification Failed',
-        text2: 'Invalid OTP',
+        text1: 'Login Failed',
+        text2: 'Something went wrong, please try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const response = await sendOtp(email, phoneNumber, loginWithEmail);
+      setSentOtp(response.otp); // Save the new OTP for comparison
+      Toast.show({
+        type: 'success',
+        text1: 'Code Sent',
+        text2: `A new code has been sent to your ${
+          loginWithEmail ? 'Email' : 'Phone Number'
+        }`,
+      });
+      setResendDisabled(true);
+      setResendTimer(60);
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to resend OTP. Please try again.',
       });
     }
   };
-  
-  
 
-  const handleResendCode = () => {
-    // Show success toast
-    Toast.show({
-      type: 'success',
-      text1: 'Code Sent',
-      text2: `A new code has been sent to your ${
-        loginWithEmail ? 'Email' : 'Phone Number'
-      }`,
-    });
-
-    // Disable resend button and reset timer
-    setResendDisabled(true);
-    setResendTimer(60);
-  };
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#503A73" />
+        <Text style={styles.loadingText}>Loading OTP...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -160,10 +240,7 @@ const OTPScreen = ({route, navigation}) => {
           ))}
         </View>
 
-        <TouchableOpacity
-          onPress={handleResendCode}
-          disabled={resendDisabled} // Disable the resend button
-        >
+        <TouchableOpacity onPress={handleResendCode} disabled={resendDisabled}>
           <Text
             style={[
               styles.resendText,
@@ -181,7 +258,6 @@ const OTPScreen = ({route, navigation}) => {
           )}
         </TouchableOpacity>
       </View>
-      {/* Toast Component */}
       <Toast />
     </View>
   );
@@ -217,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Montserrat-Regular',
     marginLeft: 10,
-    color: Colors.BLACK
+    color: Colors.BLACK,
   },
   title: {
     fontSize: 24,
@@ -266,19 +342,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat-Regular',
   },
   disabledResendText: {
-    color: '#999', // Gray out the text when disabled
+    color: '#999',
   },
   button: {
     backgroundColor: '#503A73',
     padding: 15,
     borderRadius: 5,
+    width: '100%',
     alignItems: 'center',
-    width: '80%',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Montserrat-Regular',
+    fontFamily: 'Montserrat-Bold',
   },
 });
 

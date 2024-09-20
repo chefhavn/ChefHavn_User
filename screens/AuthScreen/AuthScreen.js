@@ -35,7 +35,7 @@ const AuthScreen = ({ navigation }) => {
   const [toggling, setToggling] = useState(false);
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const { loginUser } = useContext(UserContext); // UserContext where user info is stored
+  const { loginUser } = useContext(UserContext);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -79,6 +79,7 @@ const AuthScreen = ({ navigation }) => {
       // Navigate to home screen or any other screen
       navigation.navigate('HomeTab');
     } catch (error) {
+      console.log(error)
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         setError('Sign in cancelled');
       } else if (error.code === statusCodes.IN_PROGRESS) {

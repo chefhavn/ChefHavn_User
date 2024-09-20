@@ -8,13 +8,14 @@ import {
   Image,
   ScrollView,
   Animated,
-  Alert
+  Alert,
 } from 'react-native';
 import {UserContext} from '../../context/UserContext';
 import Colors from '../../utils/Colors';
 import BottomSpacer from '../../components/BottomSpacer';
 import {EventCard} from '../../components/EventCard';
 import {LocationContext} from '../../context/LocationContext';
+import {getRecentBookingByUserId} from '../../services/api';
 
 const images = [
   require('../../assets/images/slider/slide-1.png'),
@@ -32,16 +33,33 @@ const HomeScreen = ({navigation}) => {
   const {locationDetails} = useContext(LocationContext);
   const carouselRef = useRef(null);
   const scrollX = new Animated.Value(0);
-  const [recentOrder, setRecentOrder] = useState({
-    orderId: '123456',
-    status: 'Chef on the way',
-  });
+  const [recentOrder, setRecentOrder] = useState(null);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const fetchRecentOrder = async () => {
+      if (user?.id) {
+        try {
+          const response = await getRecentBookingByUserId(user.id);
+          if (response.success) {
+            setRecentOrder(response.booking);
+          } else {
+            setRecentOrder(null);
+          }
+        } catch (error) {
+          console.error('Failed to fetch recent order:', error);
+          setRecentOrder(null);
+        }
+      }
+    };
+
+    fetchRecentOrder();
+  }, [user]);
 
   useEffect(() => {
     let position = 0;
@@ -100,7 +118,9 @@ const HomeScreen = ({navigation}) => {
               {locationDetails ? locationDetails?.name : 'Hyderabad'}
             </Text>
             <Text style={styles.subLocationText}>
-              {locationDetails ? formatText(locationDetails.address, 30) : 'Hi-Tech City Metro Station'}
+              {locationDetails
+                ? formatText(locationDetails.address, 30)
+                : 'Hi-Tech City Metro Station'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -145,38 +165,28 @@ const HomeScreen = ({navigation}) => {
       />
 
       {/* {renderRecentBooking()} */}
-      {user?.token && (
-        <>
-          {recentOrder && (
-            <View style={styles.welcomeContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderText}>
-                  Recent Order Status
-                </Text>
-              </View>
-            </View>
-          )}
-
-          <View style={styles.section}>
-            {recentOrder && (
-              <View style={styles.orderSection}>
-                <View>
-                  <Text style={styles.orderText}>
-                    Order #{recentOrder.orderId}
-                  </Text>
-                  <Text style={styles.orderStatus}>{recentOrder.status}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.viewOrderButton}
-                  onPress={() =>
-                    navigation.navigate('ViewOrderScreen', {orderId: 123})
-                  }>
-                  <Text style={styles.viewOrderButtonText}>View Order</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+      {user?.token && recentOrder && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>Recent Order Status</Text>
           </View>
-        </>
+          <View style={styles.orderSection}>
+            <View>
+              <Text style={styles.orderText}>Order #{recentOrder?.booking_number?.split('-').pop()}</Text>
+              <Text style={styles.orderStatus}>{recentOrder.status}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.viewOrderButton}
+              // onPress={() =>
+              //   navigation.navigate('ViewOrderScreen', {
+              //     orderId: recentOrder.orderId,
+              //   })
+              // }
+              >
+              <Text style={styles.viewOrderButtonText}>View Order</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       <View style={styles.sectionHeaderServices}>
@@ -193,7 +203,7 @@ const HomeScreen = ({navigation}) => {
         title: 'Basic Event',
         subtitle: 'Up to 10 people',
         discountText: 'Content Offer #1',
-        description: 'Content Subheading Basic Event'
+        description: 'Content Subheading Basic Event',
       })}
 
       {EventCard({
@@ -201,7 +211,7 @@ const HomeScreen = ({navigation}) => {
         title: 'Large Event',
         subtitle: 'More than 10 and Upto 25 people',
         discountText: 'Content Offer #2',
-        description: 'Content Subheading Large Event'
+        description: 'Content Subheading Large Event',
       })}
 
       <BottomSpacer marginBottom={80} />

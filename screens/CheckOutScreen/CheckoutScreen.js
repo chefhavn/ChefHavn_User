@@ -12,6 +12,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import Colors from '../../utils/Colors';
 import PriceBreakDown from '../../components/PriceBreakDown';
 import EventDetailsCard from '../../components/EventDetailsCard';
+import moment from "moment"
 
 const CheckoutScreen = () => {
   const navigation = useNavigation();
@@ -31,24 +32,34 @@ const CheckoutScreen = () => {
 
   // Function to format the date and time
   const formatDateTime = (dateString, timeString) => {
-    const date = new Date(dateString);
-    const time = new Date(timeString);
-
+    // Split the time string into hours and minutes
+    const [timePart, ampm] = timeString.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
+    
+    // Convert to 24-hour format if needed
+    if (ampm === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (ampm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  
+    // Construct a new Date object using the date and time
+    const [year, month, day] = dateString.split('-').map(Number);
+    const dateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  
     // Format date as 'MM/DD/YYYY'
     const formattedDate = `${
-      date.getMonth() + 1
-    }/${date.getDate()}/${date.getFullYear()}`;
-
+      dateTime.getMonth() + 1
+    }/${dateTime.getDate()}/${dateTime.getFullYear()}`;
+  
     // Format time as 'HH:mm AM/PM'
-    const hours = time.getHours();
-    const minutes = time.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedTime = `${hours % 12 || 12}:${
-      minutes < 10 ? '0' : ''
-    }${minutes} ${ampm}`;
-
-    return {formattedDate, formattedTime};
+    const formattedHours = dateTime.getUTCHours() % 12 || 12;
+    const formattedMinutes = String(dateTime.getUTCMinutes()).padStart(2, '0');
+    const formattedTime = `${formattedHours}:${formattedMinutes} ${formattedHours >= 12 ? 'PM' : 'AM'}`;
+  
+    return { formattedDate, formattedTime };
   };
+    
 
   const {formattedDate, formattedTime} = formatDateTime(
     selectedDate,

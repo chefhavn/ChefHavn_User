@@ -1,6 +1,6 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, CardStyleInterpolators} from '@react-navigation/stack';
 import SplashScreen from './screens/AuthScreen/SplashScreen';
 import WelcomeScreen from './screens/AuthScreen/WelcomeScreen';
 import AuthScreen from './screens/AuthScreen/AuthScreen';
@@ -22,6 +22,7 @@ import MapScreen from './screens/MapScreen/MapScreen';
 import ViewOrderScreen from './screens/ViewOrder/ViewOrderScreen';
 import {LocationProvider} from './context/LocationContext';
 import OrderDetailsScreen from './screens/MyOrderScreen/OrderDetailsScreen';
+import BookingScreen from './screens/EventScreen/BookingScreen';
 
 const Stack = createStackNavigator();
 
@@ -65,6 +66,16 @@ const AppNavigator = () => {
             name="OrderDetailsScreen"
             component={OrderDetailsScreen}
           />
+          <Stack.Screen
+          name="BookingScreen"
+          component={BookingScreen}
+          options={{
+            title: 'BookingScreen',
+            headerShown: false,
+            gestureDirection: 'vertical',
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          }}
+        />
         </>
       ) : (
         <>

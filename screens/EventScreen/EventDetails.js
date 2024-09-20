@@ -9,8 +9,6 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {useNavigation} from '@react-navigation/native';
 import Colors from '../../utils/Colors';
 import {UserContext} from '../../context/UserContext';
@@ -38,16 +36,17 @@ const EventDetails = ({route}) => {
     isFirstSectionFilled && guestQuantity && vegNonVeg;
 
   const handleBookNow = () => {
-    navigation.navigate('CheckoutScreen', {
-      title,
-      numberOfHours,
-      numberOfPeople,
-      guestQuantity,
-      selectedDate,
-      selectedTime,
-      eventType,
-      vegNonVeg,
-    });
+    // navigation.navigate('CheckoutScreen', {
+    //   title,
+    //   numberOfHours,
+    //   numberOfPeople,
+    //   guestQuantity,
+    //   selectedDate,
+    //   selectedTime,
+    //   eventType,
+    //   vegNonVeg,
+    // });
+    navigation.navigate('BookingScreen', { title, imagePath, description });
   };
 
   const handleDateChange = (event, date) => {
@@ -84,180 +83,21 @@ const EventDetails = ({route}) => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {/* <Image source={imagePath} style={styles.eventImage} /> */}
         <View>
-        <Image source={imagePath} style={styles.eventImage} />
-      </View>
+          <Image source={imagePath} style={styles.eventImage} />
+        </View>
 
         <View style={styles.detailsContainer}>
           <Text style={styles.eventTitle}>{title}</Text>
           <Text style={styles.eventDescription}>{description}</Text>
 
-          {/* Event Type */}
-          <View style={styles.inputBox}>
-            <Text style={styles.inputLabel}>Chef Type:</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={eventType}
-                onValueChange={itemValue => setEventType(itemValue)}
-                style={{
-                  inputIOS: styles.picker,
-                  inputAndroid: styles.picker,
-                  placeholder: {
-                    color: Colors.BLACK,
-                  },
-                  color: Colors.BLACK,
-                }}
-                itemStyle={styles.pickerItem}>
-                <Picker.Item
-                  style={styles.pickerItem}
-                  label="Basic Cook"
-                  value="Basic"
-                />
-                <Picker.Item
-                  style={styles.pickerItem}
-                  label="Professional Cook"
-                  value="Professional"
-                />
-              </Picker>
-            </View>
-          </View>
-
-          {isEventTypeFilled && (
-            <View style={styles.inputRow}>
-              <View style={styles.inputBox}>
-                <Text style={styles.inputLabel}>Hours:</Text>
-                <TextInput
-                  style={styles.input}
-                  value={numberOfHours}
-                  onChangeText={setNumberOfHours}
-                  placeholderTextColor={Colors.BLACK}
-                  keyboardType="numeric"
-                  placeholder="Hours"
-                />
-              </View>
-
-              <View style={styles.inputBox}>
-                <Text style={styles.inputLabel}>People:</Text>
-                <TextInput
-                  style={styles.input}
-                  value={numberOfPeople}
-                  onChangeText={setNumberOfPeople}
-                  placeholderTextColor={Colors.BLACK}
-                  keyboardType="numeric"
-                  placeholder="People"
-                />
-              </View>
-            </View>
-          )}
-
-          {isFirstSectionFilled && (
-            <>
-              <View style={styles.inputRow}>
-                <View style={styles.inputBox}>
-                  <Text style={styles.inputLabel}>Dishes:</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={guestQuantity}
-                    onChangeText={setGuestQuantity}
-                    placeholderTextColor={Colors.BLACK}
-                    keyboardType="numeric"
-                    placeholder="Dishes"
-                  />
-                </View>
-
-                {/* Veg/Non-Veg Dropdown */}
-                <View style={styles.inputBox}>
-                  <Text style={styles.inputLabel}>Veg/Non-Veg:</Text>
-                  <View style={styles.pickerContainer}>
-                    <Picker
-                      selectedValue={vegNonVeg}
-                      onValueChange={itemValue => setVegNonVeg(itemValue)}
-                      style={{
-                        inputIOS: styles.picker,
-                        inputAndroid: styles.picker,
-                        placeholder: {
-                          color: Colors.BLACK,
-                        },
-                        color: Colors.BLACK,
-                      }}>
-                      <Picker.Item
-                        style={styles.pickerItem}
-                        label="Veg"
-                        value="Veg"
-                      />
-                      <Picker.Item
-                        style={styles.pickerItem}
-                        label="Non-Veg"
-                        value="Non-Veg"
-                      />
-                    </Picker>
-                  </View>
-                </View>
-              </View>
-
-              {/* Date and Time in One Row */}
-              <View style={styles.inputRow}>
-                <View style={styles.inputBox}>
-                  <Text style={styles.inputLabel}>Date:</Text>
-                  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                    <Text
-                      style={[
-                        styles.input,
-                        selectedDate ? styles.selected : styles.placeholder,
-                      ]}>
-                      {selectedDate
-                        ? selectedDate.toLocaleDateString()
-                        : 'Select Date'}
-                    </Text>
-                  </TouchableOpacity>
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={new Date()}
-                      mode="date"
-                      display="default"
-                      minimumDate={new Date()}
-                      maximumDate={getDateLimit()}
-                      onChange={handleDateChange}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.inputBox}>
-                  <Text style={styles.inputLabel}>Time:</Text>
-                  <TouchableOpacity onPress={() => setShowTimePicker(true)}>
-                    <Text style={styles.input}>
-                      {selectedTime.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-                  {showTimePicker && (
-                    <DateTimePicker
-                      value={selectedTime}
-                      mode="time"
-                      display="default"
-                      onChange={handleTimeChange}
-                    />
-                  )}
-                </View>
-              </View>
-            </>
-          )}
-
           {/* Book Now Button */}
           {/* Conditional Button Rendering */}
           {user?.token ? (
-            isSecondSectionFilled && (
-              <TouchableOpacity
-                style={[
-                  styles.bookButton,
-                  !eventType && {backgroundColor: '#ccc'},
-                ]}
-                onPress={handleBookNow}
-                disabled={!eventType}>
-                <Text style={styles.bookButtonText}>Book Now</Text>
-              </TouchableOpacity>
-            )
+            <TouchableOpacity
+              style={[styles.bookButton]}
+              onPress={handleBookNow}>
+              <Text style={styles.bookButtonText}>Book Now</Text>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.bookButton}
@@ -389,7 +229,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.PRIMARY,
     outlineWidth: 1,
     outlineColor: Colors.PRIMARY,
-    width: "100%",
+    width: '100%',
     paddingRight: 20,
     fontFamily: 'Montserrat-Regular',
   },
