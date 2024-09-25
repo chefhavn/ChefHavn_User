@@ -28,7 +28,7 @@ export const EventCard = ({ imagePath, title, subtitle, discountText, descriptio
 
 const styles = StyleSheet.create({
     card: {
-        width: '90%',
+        width: '95%',
         height: 300,
         backgroundColor: 'white',
         borderRadius: 10,

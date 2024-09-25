@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEff
 
 export default function MyOrderScreen({ navigation }) {
   const [bookings, setBookings] = useState([]);
+  const [menuVisible, setMenuVisible] = useState(-1); // State to manage which menu is visible
   const { user } = useContext(UserContext);
 
   // Function to fetch bookings
@@ -38,6 +39,15 @@ export default function MyOrderScreen({ navigation }) {
           [{ text: 'OK' }],
         );
       }
+    }
+  };
+
+  // Toggle visibility of the menu for a specific order
+  const toggleMenu = (index) => {
+    if (menuVisible === index) {
+      setMenuVisible(-1); // Close the menu if it's already open
+    } else {
+      setMenuVisible(index); // Open the menu for the selected order
     }
   };
 
@@ -76,7 +86,7 @@ export default function MyOrderScreen({ navigation }) {
 
       {user?.token && bookings.length > 0 && (
         <>
-          {bookings?.map((booking) => (
+          {bookings?.map((booking, index) => (
             <View style={styles.orderItem} key={booking._id}>
               <View style={styles.orderHeader}>
                 <View style={styles.orderDetails}>
@@ -87,6 +97,28 @@ export default function MyOrderScreen({ navigation }) {
                     {booking.cuisine_type}
                   </Text>
                 </View>
+
+                {/* 3-dot menu */}
+                <TouchableOpacity onPress={() => toggleMenu(index)}>
+                  <Image
+                    source={require('../../assets/images/dots.png')}
+                    style={styles.actionIcon}
+                  />
+                </TouchableOpacity>
+
+                {/* Menu dropdown for the selected order */}
+                {menuVisible === index && (
+                  <View style={styles.menuDropdown}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setMenuVisible(-1); // Close the menu
+                        navigation.navigate('ViewOrderScreen', { orderId: booking._id });
+                      }}
+                    >
+                      <Text style={styles.menuOption}>View Details</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
 
               <View style={styles.orderContent}>
@@ -128,6 +160,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.WHITE,
     padding: 16,
+  },
+  menuDots: {
+    fontSize: 24,
+    color: Colors.BLACK,
+    padding: 10,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -275,6 +312,25 @@ const styles = StyleSheet.create({
   chefDetailsText: {
     color: Colors.WHITE,
     fontSize: 16,
+    fontFamily: 'Montserrat-Regular',
+  },
+  actionIcon: {
+    width: 24,
+    height: 24,
+  },
+  menuDropdown: {
+    position: 'absolute',
+    right: 0,
+    top: 30,
+    backgroundColor: Colors.LIGHT_GRAY,
+    borderRadius: 8,
+    padding: 8,
+    zIndex: 10,
+  },
+  menuOption: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    padding: 8,
     fontFamily: 'Montserrat-Regular',
   },
 });

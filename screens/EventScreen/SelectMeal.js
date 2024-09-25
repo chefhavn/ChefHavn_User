@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Colors from '../../utils/Colors';
 
 const SelectMeal = ({
   selectedMeal,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 2,
     marginTop: 10,
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   breakfastButton: {
     borderRadius: 24,
@@ -220,14 +221,14 @@ const styles = StyleSheet.create({
   dinnerButton: {
     borderRadius: 24,
     width: 100,
-    paddingVertical: 8,
+    paddingVertical: 4,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff', // Default background
   },
   mealText: {
-    color: 'gray',
+    color: Colors.GRAY,
     fontSize: 16,
     fontFamily: 'Montserrat-Bold',
   },
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   lunchSection: {
     marginBottom: 20,
     border: '1px solid #d3d3d3',
-    padding: 12,
+    padding: 5,
     borderRadius: 8,
   },
   //   lunchHeading: {
@@ -259,18 +260,18 @@ const styles = StyleSheet.create({
   timeSlotsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 5,
     marginTop: 20,
   },
   timeSlot: {
     borderWidth: 1,
     borderColor: '#d3d3d3',
     padding: 8,
-    marginBottom: 8, // Space between rows
-    width: '28%', // Adjust width to fit 3 items per row with some space between
+    marginBottom: 2, // Space between rows
+    width: '32%', // Adjust width to fit 3 items per row with some space between
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 5, // Optional: rounded corners
+    borderRadius: 10, // Optional: rounded corners
   },
   timeSlotActive: {
     borderWidth: 2,

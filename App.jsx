@@ -23,6 +23,7 @@ import ViewOrderScreen from './screens/ViewOrder/ViewOrderScreen';
 import {LocationProvider} from './context/LocationContext';
 import OrderDetailsScreen from './screens/MyOrderScreen/OrderDetailsScreen';
 import BookingScreen from './screens/EventScreen/BookingScreen';
+import SavedAddresses from './screens/SettingScreen/SavedAddress';
 
 const Stack = createStackNavigator();
 
@@ -62,6 +63,7 @@ const AppNavigator = () => {
           <Stack.Screen name="SelectLocation" component={SelectLocation} />
           <Stack.Screen name="MapScreen" component={MapScreen} />
           <Stack.Screen name="ViewOrderScreen" component={ViewOrderScreen} />
+          <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
           <Stack.Screen
             name="OrderDetailsScreen"
             component={OrderDetailsScreen}

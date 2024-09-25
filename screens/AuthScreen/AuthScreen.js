@@ -205,6 +205,7 @@ const AuthScreen = ({ navigation }) => {
                       }}
                       keyboardType="phone-pad"
                       maxLength={10}
+                      placeholderTextColor={Colors.BLACK}
                     />
                   </View>
                 ) : (
@@ -214,6 +215,7 @@ const AuthScreen = ({ navigation }) => {
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
+                    placeholderTextColor={Colors.BLACK}
                   />
                 )}
 
@@ -252,7 +254,6 @@ const AuthScreen = ({ navigation }) => {
                   </Pressable>
                   <Pressable
                     style={[styles.socialButton, styles.googleButton]}
-                    onPress={handleGoogleLogin}
                     >
                     <Image
                       source={require('../../assets/images/Google-50x50.png')}
@@ -371,7 +372,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     paddingHorizontal: 10,
     color: Colors.BLACK,
-    fontFamily: 'Montserrat-Regular',
+    fontFamily: 'Montserrat-SemiBold',
+    fontSize: 16
   },
   phoneNumberInput: {
     height: 50,

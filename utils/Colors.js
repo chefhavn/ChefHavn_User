@@ -1,6 +1,6 @@
 export default {
     BLACK: '#000',
-    PRIMARY: '#503A73',
+    PRIMARY: '#624E88',
     BTN_COLOR: '#d4d6dd',
     WHITE: '#fff',
     LIGHT_GOLD: '#F2E982',
@@ -17,4 +17,7 @@ export default {
     ACTIVE: '#ffffff',
     INACTIVE: '#bdc3c7',
     HEADING: '#111',
+    TRANSPARENT: '#FFFFFF00',
+    TRANSPARENT_PICKER: '#80808180',
+    SECONDARY: '#BFACE0'
 };

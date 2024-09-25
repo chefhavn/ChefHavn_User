@@ -47,6 +47,16 @@ const BookingScreen = ({route}) => {
   const [lunchTime, setLunchTime] = useState('');
   const [dinnerTime, setDinnerTime] = useState('');
 
+  // Function to get the hour options based on chefType
+  const getHourOptions = () => {
+    if (chefType === 'Basic') {
+      return Array.from({length: 10}, (_, i) => i + 1); // Numbers from 1 to 10
+    } else if (chefType === 'Professional') {
+      return Array.from({length: 16}, (_, i) => i + 10); // Numbers from 10 to 25
+    }
+    return [];
+  };
+
   const navigation = useNavigation();
 
   const handleBookNow = () => {
@@ -72,6 +82,12 @@ const BookingScreen = ({route}) => {
     // navigation.navigate('BookingScreen');
   };
 
+  const isFormValid = () => {
+    return (
+      chefType && hours && dishes && selectedDate && breakFastTime
+    );
+  };
+
   // Generate the next 5 dates
   const dates = [...Array(5).keys()].map(offset =>
     moment()
@@ -91,6 +107,8 @@ const BookingScreen = ({route}) => {
     setChefType(value);
     // Keep the modal open
   };
+
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -120,27 +138,28 @@ const BookingScreen = ({route}) => {
         {/* DROP DOWN */}
         <View style={styles.topDropdown}>
           <View style={styles.dropdownRow}>
-            {/* Chef Type custom modal */}
-            <View style={styles.dropdownContainer}>
-            <Picker
+            {/* Chef Type Picker */}
+            <View style={styles.dropdownContainerTransparent}>
+              <Picker
+              className="picker"
                 selectedValue={chefType}
                 onValueChange={itemValue => setChefType(itemValue)}
                 style={{
                   inputIOS: styles.picker,
                   inputAndroid: styles.picker,
                   placeholder: {
-                    color: Colors.BLACK,
+                    color: Colors.WHITE,
                   },
-                  color: Colors.BLACK,
-                }}
-              >
+                  color: Colors.WHITE,
+                }}>
                 <Picker.Item label="Chef Type" value="" />
                 <Picker.Item label="Basic" value="Basic" />
                 <Picker.Item label="Professional" value="Professional" />
               </Picker>
             </View>
 
-            <View style={styles.dropdownContainer}>
+            {/* Hours Picker */}
+            <View style={styles.dropdownContainerTransparent}>
               <Picker
                 selectedValue={hours}
                 onValueChange={itemValue => setHours(itemValue)}
@@ -148,16 +167,15 @@ const BookingScreen = ({route}) => {
                   inputIOS: styles.picker,
                   inputAndroid: styles.picker,
                   placeholder: {
-                    color: Colors.BLACK,
+                    color: Colors.WHITE,
                   },
-                  color: Colors.BLACK,
-                }}
-                >
+                  color: Colors.WHITE,
+                }}>
                 <Picker.Item label="Guests" value="" />
-                <Picker.Item label="1 hour" value="1" />
-                <Picker.Item label="2 hours" value="2" />
-                <Picker.Item label="3 hours" value="3" />
-                <Picker.Item label="4 hours" value="4" />
+                {/* Dynamically render hour options based on chefType */}
+                {getHourOptions().map(hour => (
+                  <Picker.Item key={hour} label={`${hour}`} value={hour} />
+                ))}
               </Picker>
             </View>
           </View>
@@ -179,8 +197,7 @@ const BookingScreen = ({route}) => {
                   color: Colors.BLACK,
                 },
                 color: Colors.BLACK,
-              }}
-              >
+              }}>
               <Picker.Item label="Dishes" value="" />
               <Picker.Item label="1" value="1" />
               <Picker.Item label="2" value="2" />
@@ -219,8 +236,7 @@ const BookingScreen = ({route}) => {
                 styles.nonVegButton,
                 selectedOption === 'nonveg' && styles.activeNonVegButton,
               ]}
-              onPress={() => setSelectedOption('nonveg')} // Handle non-veg selection
-            >
+              onPress={() => setSelectedOption('nonveg')}>
               <View style={styles.nonVegButtonContent}>
                 <Image
                   source={require('../../assets/images/nonveg.jpeg')}
@@ -324,9 +340,16 @@ const BookingScreen = ({route}) => {
         </View>
 
         {user?.token ? (
-          <TouchableOpacity style={[styles.bookButton]} onPress={handleBookNow}>
-            <Text style={styles.bookButtonText}>Book Now</Text>
-          </TouchableOpacity>
+          <TouchableOpacity
+          style={[
+            styles.bookButton,
+            { opacity: isFormValid() ? 1 : 0.5 },
+          ]}
+          onPress={isFormValid() ? handleBookNow : null}
+          disabled={!isFormValid()}
+        >
+          <Text style={styles.bookButtonText}>Book Now</Text>
+        </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.bookButton}
@@ -354,6 +377,7 @@ const styles = StyleSheet.create({
     padding: 20,
     zIndex: -5,
     position: 'relative',
+    borderBottomLeftRadius: 50
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -397,7 +421,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 5,
     backgroundColor: '#fff',
-    borderRadius: 20
+    borderRadius: 20,
+  },
+  dropdownContainerTransparent: {
+    flex: 1,
+    marginHorizontal: 5,
+    backgroundColor: Colors.TRANSPARENT_PICKER,
+    borderRadius: 20,
   },
   picker: {
     height: 50,
@@ -405,14 +435,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     fontSize: 16,
     paddingLeft: 6,
-    fontFamily: 'Montserrat-Bold',
+    fontFamily: 'Montserrat-Regular',
   },
   formSection: {
     // flex: 1,
     backgroundColor: '#d9c8e3',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    padding: 10,
     zIndex: -1,
   },
   guestsContainer: {
@@ -447,7 +477,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 24,
-    padding: 2,
+    // padding: 2,
   },
   vegButton: {
     borderRadius: 24,
@@ -470,7 +500,7 @@ const styles = StyleSheet.create({
   },
   nonVegButton: {
     borderRadius: 24,
-    width: 110,
+    width: 120,
     paddingVertical: 8,
     paddingHorizontal: 4,
     alignItems: 'center',
@@ -516,9 +546,10 @@ const styles = StyleSheet.create({
   },
 
   guestsHeading: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Montserrat-Bold',
     marginBottom: 16,
+    color: Colors.BLACK,
   },
   guestsButtonsContainer: {
     flexDirection: 'row',
@@ -554,9 +585,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   datesHeading: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Montserrat-Bold',
     marginBottom: 16,
+    color: Colors.BLACK,
   },
   datesButtonsContainer: {
     flexDirection: 'row',
@@ -599,7 +631,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Montserrat-Bold',
     marginBottom: 10,
-    color: 'gray',
+    color: Colors.BLACK,
   },
   selectInput: {
     flexDirection: 'row',

@@ -46,7 +46,7 @@ const EventDetails = ({route}) => {
     //   eventType,
     //   vegNonVeg,
     // });
-    navigation.navigate('BookingScreen', { title, imagePath, description });
+    navigation.navigate('BookingScreen', {title, imagePath, description});
   };
 
   const handleDateChange = (event, date) => {
@@ -87,8 +87,10 @@ const EventDetails = ({route}) => {
         </View>
 
         <View style={styles.detailsContainer}>
-          <Text style={styles.eventTitle}>{title}</Text>
-          <Text style={styles.eventDescription}>{description}</Text>
+          <View style={{flex: 1}}>
+            <Text style={styles.eventTitle}>{title}</Text>
+            <Text style={styles.eventDescription}>{description}</Text>
+          </View>
 
           {/* Book Now Button */}
           {/* Conditional Button Rendering */}
@@ -155,7 +157,10 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   detailsContainer: {
+    flex: 1,
     padding: 20,
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
   },
   eventTitle: {
     fontSize: 24,

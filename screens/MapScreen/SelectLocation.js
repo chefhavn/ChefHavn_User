@@ -26,6 +26,7 @@ import {LocationContext} from '../../context/LocationContext';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function SelectLocation({navigation}) {
+  const [menuVisible, setMenuVisible] = useState(null);
   const { user } = useContext(UserContext);
   const { storeLocationDetails } = useContext(LocationContext);
   const [addresses, setAddresses] = useState([]);
@@ -47,6 +48,10 @@ export default function SelectLocation({navigation}) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleMenu = (index) => {
+    setMenuVisible(menuVisible === index ? null : index); // Toggle menu visibility
   };
 
   useFocusEffect(
@@ -122,6 +127,26 @@ export default function SelectLocation({navigation}) {
       console.error('No details available for selected place');
     }
   };
+
+  console.log(storeLocationDetails)
+
+  const handleSelectAddressCard = (selectedAddress) => {
+    if (selectedAddress) {
+      const { latitude, longitude, name, address } = selectedAddress;
+  
+      storeLocationDetails({
+        placeId: selectedAddress._id, // Use the address ID as placeId
+        name: name || 'Unknown',
+        address: address || 'No address available',
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+      });
+      navigation.navigate('HomeTab'); // Navigate to HomeTab after saving
+    } else {
+      console.error('No address selected');
+    }
+  };
+  
 
   const handleSetPrimary = async addressId => {
     setLoading(true);
@@ -303,49 +328,54 @@ export default function SelectLocation({navigation}) {
           </View>
           {/* FlatList for displaying addresses */}
           <FlatList
-            data={addresses}
-            keyExtractor={item => item._id}
-            renderItem={({item}) => (
-              <TouchableOpacity style={styles.addressItem}>
-                <View style={styles.addressTextContainer}>
-                  <Text style={styles.addressType}>
-                    {item.type}{' '}
-                    {item?.type === 'Other' && ` - ${item?.otherName}`}
-                  </Text>
-                  <Text style={styles.nearbyLandmark}>{item?.landmark}</Text>
-                  <Text style={styles.addressDetails}>{item.address}</Text>
-                </View>
-                <View style={styles.addressActions}>
-                  <TouchableOpacity onPress={() => handleEdit(item)}>
-                    <Image
-                      source={require('../../assets/images/edit.png')}
-                      style={styles.actionIcon}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(item._id)}>
-                    <Image
-                      source={require('../../assets/images/delete.png')}
-                      style={styles.actionIcon}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
+      data={addresses}
+      keyExtractor={item => item._id}
+      renderItem={({ item, index }) => (
+        <TouchableOpacity onPress={() => handleSelectAddressCard(item)} style={styles.addressItem}>
+          <View style={styles.addressTextContainer}>
+            <Text style={styles.addressType}>
+              {item.type} {item?.type === 'Other' && ` - ${item?.otherName}`}
+            </Text>
+            <Text style={styles.nearbyLandmark}>{item?.landmark}</Text>
+            <Text style={styles.addressDetails}>{item.address}</Text>
+          </View>
+          <View style={styles.addressActions}>
+            <TouchableOpacity onPress={() => toggleMenu(index)}>
+              <Image
+                source={require('../../assets/images/dots.png')}
+                style={styles.actionIcon}
+              />
+            </TouchableOpacity>
+            {menuVisible === index && (
+              <View style={styles.menu}>
+                <TouchableOpacity onPress={() => { handleEdit(item); setMenuVisible(null); }} style={styles.menuItem}>
+                  {/* <Image source={require('../../assets/images/edit.png')} style={styles.menuIcon} /> */}
+                  <Text style={styles.menuText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { handleDelete(item._id); setMenuVisible(null); }} style={styles.menuItem}>
+                  {/* <Image source={require('../../assets/images/delete.png')} style={styles.menuIcon} /> */}
+                  <Text style={styles.DeletemenuText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             )}
-            ListEmptyComponent={
-              loading ? (
-                <Text>Loading...</Text>
-              ) : (
-                <View style={styles.noAddressContainer}>
-                  <Image
-                    source={require('../../assets/images/not-found.png')}
-                    style={styles.noAddressIcon}
-                  />
-                  <Text style={styles.noAddressText}>No address found</Text>
-                </View>
-              )
-            }
-            contentContainerStyle={styles.flatListContent}
-          />
+          </View>
+        </TouchableOpacity>
+      )}
+      ListEmptyComponent={
+        loading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <View style={styles.noAddressContainer}>
+            <Image
+              source={require('../../assets/images/not-found.png')}
+              style={styles.noAddressIcon}
+            />
+            <Text style={styles.noAddressText}>No address found</Text>
+          </View>
+        )
+      }
+      contentContainerStyle={styles.flatListContent}
+    />
           {selectedAddress && (
             <Modal
               animationType="slide"
@@ -476,7 +506,7 @@ const styles = StyleSheet.create({
   },
   addressItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
@@ -521,7 +551,7 @@ const styles = StyleSheet.create({
   noAddressContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1, // Ensures the container takes up the full height of the screen
+    flex: 1,
   },
   noAddressText: {
     fontSize: 18,
@@ -562,6 +592,37 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  menu: {
+    position: 'absolute',
+    top: 30,
+    right: 0,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 3,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  menuIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  menuText: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Regular',
+  },
+  DeletemenuText: {
+    fontSize: 16,
+    color: Colors.RED,
+    fontFamily: 'Montserrat-Regular',
   },
   resultImage: {
     width: 20,

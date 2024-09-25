@@ -12,49 +12,49 @@ import Toast from 'react-native-toast-message';
 import Colors from '../../utils/Colors';
 import {sendOtp, login} from '../../services/api';
 import {UserContext} from '../../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OTPScreen = ({route, navigation}) => {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [loading, setLoading] = useState(true); // Initially true while loading OTP
-  const [resendTimer, setResendTimer] = useState(60);
-  const [resendDisabled, setResendDisabled] = useState(true);
+  const [loading, setLoading] = useState(true); // Initial loading state
+  const [resendTimer, setResendTimer] = useState(30); // Set initial timer to 30 seconds
+  const [resendDisabled, setResendDisabled] = useState(true); // Initially disabled
   const inputRefs = useRef([]);
   const [selectedInput, setSelectedInput] = useState(null);
   const {loginUser} = useContext(UserContext);
   const {email, phoneNumber, loginWithEmail} = route.params;
   const [sentOtp, setSentOtp] = useState(null);
 
+  // Fetch OTP on mount
   useEffect(() => {
-    // Call sendOtp API when the component mounts
     const fetchOtp = async () => {
       try {
         const response = await sendOtp(email, phoneNumber, loginWithEmail);
-        setSentOtp(response.otp); // Save the OTP for comparison
-        setLoading(false); // OTP is now loaded
+        setSentOtp(response.otp);
+        setLoading(false);
       } catch (error) {
         Toast.show({
           type: 'error',
           text1: 'Error',
           text2: 'Failed to send OTP. Please try again.',
         });
-        setLoading(false); // OTP request failed, stop loading
+        setLoading(false);
       }
     };
-
     fetchOtp();
   }, [email, phoneNumber, loginWithEmail]);
 
+  // Resend timer countdown
   useEffect(() => {
     if (resendDisabled && resendTimer > 0) {
       const timer = setInterval(() => {
         setResendTimer(prev => prev - 1);
       }, 1000);
 
-      return () => clearInterval(timer);
+      return () => clearInterval(timer); // Clear interval on unmount
     }
-
-    if (resendTimer === 0 && resendDisabled) {
-      setResendDisabled(false);
+    if (resendTimer === 0) {
+      setResendDisabled(false); // Enable resend button when timer hits 0
     }
   }, [resendDisabled, resendTimer]);
 
@@ -67,97 +67,38 @@ const OTPScreen = ({route, navigation}) => {
     }
   };
 
+  // Handle OTP verification
   const handleOtpVerification = async () => {
     const enteredOtp = otp.join('');
     setLoading(true);
     try {
-      if (loginWithEmail) {
-        if (enteredOtp === sentOtp) {
-          // Assume login logic here
-          // Simulate successful login
-          const response = await login(email, phoneNumber, loginWithEmail);
+      const response = await login(email, phoneNumber, loginWithEmail);
+      if (response.success) {
+        const userData = {
+          token: response.token,
+          name: response.user.name,
+          id: response.user.id,
+          email: response.user.email || email,
+          phone: response.user.phone,
+          role: response.user.role,
+        };
 
-          if (response.success) {
-            const userData = {
-              token: response.token,
-              name: response.user.name,
-              id: response.user.id,
-              email: response.user.email || email,
-              phone: response.user.phone,
-              role: response.user.role,
-            };
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        await loginUser(userData);
 
-            await loginUser(userData);
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful',
+          text2: 'You have been logged in successfully!',
+        });
 
-            Toast.show({
-              type: 'success',
-              text1: 'Login Successful',
-              text2: 'You have been logged in successfully!',
-              visibilityTime: 1000,
-              position: 'top',
-              topOffset: 50,
-              textStyle: {color: '#503A73'},
-            });
-
-            navigation.navigate('HomeTab');
-          } else {
-            Toast.show({
-              type: 'error',
-              text1: 'OTP Verification Failed',
-              text2: response.message || 'Invalid OTP',
-            });
-          }
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'OTP Verification Failed',
-            text2: 'Invalid OTP',
-          });
-        }
+        navigation.navigate('HomeTab');
       } else {
-        // For phone number-based OTP
-        if (enteredOtp === '1234') {
-          // Assume login logic here
-          // Simulate successful login
-          const response = await login(email, phoneNumber, loginWithEmail);
-
-          if (response.success) {
-            const userData = {
-              token: response.token,
-              name: response.user.name,
-              id: response.user.id,
-              email: response.user.email || email,
-              phone: response.user.phone,
-              role: response.user.role,
-            };
-
-            await loginUser(userData);
-
-            Toast.show({
-              type: 'success',
-              text1: 'Login Successful',
-              text2: 'You have been logged in successfully!',
-              visibilityTime: 1000,
-              position: 'top',
-              topOffset: 50,
-              textStyle: {color: '#503A73'},
-            });
-
-            navigation.navigate('HomeTab');
-          } else {
-            Toast.show({
-              type: 'error',
-              text1: 'Login Failed',
-              text2: response.message || 'Something went wrong',
-            });
-          }
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'OTP Verification Failed',
-            text2: 'Invalid OTP',
-          });
-        }
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: response.message || 'Invalid OTP',
+        });
       }
     } catch (error) {
       Toast.show({
@@ -170,10 +111,11 @@ const OTPScreen = ({route, navigation}) => {
     }
   };
 
+  // Handle resend OTP
   const handleResendCode = async () => {
     try {
       const response = await sendOtp(email, phoneNumber, loginWithEmail);
-      setSentOtp(response.otp); // Save the new OTP for comparison
+      setSentOtp(response.otp);
       Toast.show({
         type: 'success',
         text1: 'Code Sent',
@@ -181,8 +123,10 @@ const OTPScreen = ({route, navigation}) => {
           loginWithEmail ? 'Email' : 'Phone Number'
         }`,
       });
+
+      // Reset the timer and disable the resend button for 30 seconds
       setResendDisabled(true);
-      setResendTimer(60);
+      setResendTimer(30);
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -192,11 +136,14 @@ const OTPScreen = ({route, navigation}) => {
     }
   };
 
+  // Custom loading screen with styled backdrop
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#503A73" />
-        <Text style={styles.loadingText}>Loading OTP...</Text>
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingBackdrop}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Please wait...</Text>
+        </View>
       </View>
     );
   }
@@ -246,16 +193,12 @@ const OTPScreen = ({route, navigation}) => {
               styles.resendText,
               resendDisabled && styles.disabledResendText,
             ]}>
-            Resend Code {resendDisabled ? `(${resendTimer}s)` : ''}
+            {resendDisabled ? `Resend Code (${resendTimer}s)` : 'Resend Code'}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleOtpVerification}>
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Continue</Text>
-          )}
+          <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
       </View>
       <Toast />
@@ -347,14 +290,33 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#503A73',
     padding: 15,
-    borderRadius: 5,
-    width: '100%',
+    borderRadius: 10,
+    width: '80%',
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
+    fontSize: 18,
+    fontFamily: 'Montserrat-SemiBold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingBackdrop: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 10,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
     fontSize: 16,
-    fontFamily: 'Montserrat-Bold',
+    fontFamily: 'Montserrat-Regular',
   },
 });
 

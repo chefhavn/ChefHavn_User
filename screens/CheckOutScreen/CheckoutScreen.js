@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,14 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import Colors from '../../utils/Colors';
 import PriceBreakDown from '../../components/PriceBreakDown';
 import EventDetailsCard from '../../components/EventDetailsCard';
-import moment from "moment"
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {LocationContext} from '../../context/LocationContext';
+import moment from 'moment';
+
+const formatText = (text, maxLength) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
 
 const CheckoutScreen = () => {
   const navigation = useNavigation();
@@ -27,45 +34,64 @@ const CheckoutScreen = () => {
     eventType,
     vegNonVeg,
   } = route.params;
+  const {locationDetails} = useContext(LocationContext);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        if (storedUserData) {
+          const userData = JSON.parse(storedUserData);
+          setUserName(userData.name);
+          setPhoneNumber(userData.phone);
+        }
+      } catch (error) {
+        console.error('Failed to load user details from AsyncStorage', error);
+      }
+    };
+    fetchUserDetails();
+  }, []);
+  
 
   // Function to format the date and time
   const formatDateTime = (dateString, timeString) => {
-    // Split the time string into hours and minutes
     const [timePart, ampm] = timeString.split(' ');
     let [hours, minutes] = timePart.split(':').map(Number);
-    
-    // Convert to 24-hour format if needed
+
     if (ampm === 'PM' && hours < 12) {
       hours += 12;
     } else if (ampm === 'AM' && hours === 12) {
       hours = 0;
     }
-  
-    // Construct a new Date object using the date and time
+
     const [year, month, day] = dateString.split('-').map(Number);
     const dateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
-  
-    // Format date as 'MM/DD/YYYY'
+
     const formattedDate = `${
       dateTime.getMonth() + 1
     }/${dateTime.getDate()}/${dateTime.getFullYear()}`;
-  
-    // Format time as 'HH:mm AM/PM'
+
     const formattedHours = dateTime.getUTCHours() % 12 || 12;
     const formattedMinutes = String(dateTime.getUTCMinutes()).padStart(2, '0');
-    const formattedTime = `${formattedHours}:${formattedMinutes} ${formattedHours >= 12 ? 'PM' : 'AM'}`;
-  
-    return { formattedDate, formattedTime };
+    const formattedTime = `${formattedHours}:${formattedMinutes} ${
+      formattedHours >= 12 ? 'PM' : 'AM'
+    }`;
+
+    return {formattedDate, formattedTime};
   };
-    
 
   const {formattedDate, formattedTime} = formatDateTime(
     selectedDate,
     selectedTime,
   );
 
+  const handleMapScreen = () => {
+    navigation.navigate('SelectLocation');
+  };
 
   const getPrice = () => {
     const priceBreakup = {
@@ -92,25 +118,30 @@ const CheckoutScreen = () => {
   const cook = price * 0.75 - (sgst + cgst);
   const totalAmount = price;
 
-  const handleCheckout = () => {
-  setIsProcessing(true);
-  setTimeout(() => {
-    setIsProcessing(false);
-    // Pass booking details to ThankYouScreen
-    navigation.navigate('ThankYouScreen', {
-      title,
-      eventType,
-      numberOfHours,
-      numberOfPeople,
-      guestQuantity,
-      formattedDate,
-      formattedTime,
-      vegNonVeg,
-      totalAmount,
-    });
-  }, 3000);
-};
+  console.log(locationDetails)
 
+  const handleCheckout = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+
+      const locationDetailsString = `${locationDetails?.name}|${locationDetails?.address}|${locationDetails?.latitude}|${locationDetails?.longitude}`;
+
+      // Pass booking details to ThankYouScreen
+      navigation.navigate('ThankYouScreen', {
+        title,
+        eventType,
+        numberOfHours,
+        numberOfPeople,
+        guestQuantity,
+        formattedDate,
+        formattedTime,
+        vegNonVeg,
+        totalAmount,
+        addressId: locationDetailsString,
+      });
+    }, 3000);
+  };
 
   return (
     <View style={styles.container}>
@@ -123,7 +154,16 @@ const CheckoutScreen = () => {
             style={styles.backIcon}
           />
         </TouchableOpacity>
-        <Text style={styles.screenTitle}>Checkout</Text>
+        <TouchableOpacity onPress={handleMapScreen}>
+          <Text style={styles.locationText}>
+            {locationDetails ? locationDetails?.name : 'Hyderabad'}
+          </Text>
+          <Text style={styles.subLocationText}>
+            {locationDetails
+              ? formatText(locationDetails.address, 30)
+              : 'Hi-Tech City Metro Station'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -150,6 +190,25 @@ const CheckoutScreen = () => {
             />
           </View>
 
+          {/* Selected Address Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Selected Address</Text>
+            <View style={styles.addressContainer}>
+              <Text style={styles.addressText}>
+                {locationDetails ? locationDetails.address : 'No address selected'}
+              </Text>
+            </View>
+          </View>
+
+          {/* User Contact Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+            <View style={styles.contactInfoContainer}>
+              <Text style={styles.contactInfoText}>Name: {userName}</Text>
+              <Text style={styles.contactInfoText}>Phone: {phoneNumber}</Text>
+            </View>
+          </View>
+
           <TouchableOpacity
             style={styles.checkoutButton}
             onPress={handleCheckout}
@@ -171,6 +230,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f4f4f4',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat-SemiBold',
+    color: Colors.PRIMARY,
+    marginBottom: 10,
+  },
+  addressContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: {width: 0, height: 3},
+  },
+  addressText: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Regular',
+    color: '#666',
+  },
+  contactInfoContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: {width: 0, height: 3},
+  },
+  contactInfoText: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Regular',
+    color: '#666',
+    marginBottom: 5,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,10 +280,17 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
-  screenTitle: {
-    fontSize: 20,
-    fontFamily: 'Montserrat-Bold',
+  headerInfo: {
     marginLeft: 10,
+  },
+  restaurantName: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Bold',
+  },
+  deliveryAddress: {
+    fontSize: 14,
+    fontFamily: 'Montserrat-Regular',
+    color: '#666',
   },
   scrollViewContent: {
     flexGrow: 1,

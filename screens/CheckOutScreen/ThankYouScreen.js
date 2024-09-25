@@ -20,7 +20,10 @@ const ThankYouScreen = () => {
     formattedTime,
     vegNonVeg,
     totalAmount,
+    addressId
   } = route.params;
+
+  console.log(addressId)
 
   console.log(route.params)
 
@@ -42,9 +45,9 @@ const ThankYouScreen = () => {
           totalAmount,
           formattedDate,
           formattedTime,
-          'Hyderabad'
+          'Hyderabad',
+          addressId
         );
-        
         if (result) {
           alert('Your payment is successful and order saved');
         }

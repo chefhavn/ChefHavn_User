@@ -161,6 +161,7 @@ export const createBooking = async (
   selectedDate,
   selectedTime,
   location,
+  addressId
 ) => {
   const payload = {
     customer_id: customerId,
@@ -174,10 +175,8 @@ export const createBooking = async (
     date: selectedDate,
     time: selectedTime,
     location,
+    addressId
   };
-
-  console.log('Sending Date:', selectedDate);
-  console.log('Sending Time:', selectedTime);
 
   try {
     const response = await axiosInstance.post(
@@ -200,6 +199,17 @@ export const getBookingsByUserId = async customerId => {
     // console.log(response)
   } catch (error) {
     console.error('Error fetching bookings:', error);
+    throw error;
+  }
+};
+
+export const getBookingById = async (orderId) => {
+  try {
+    const response = await axiosInstance.get(`/api/booking/booking/${orderId}`);
+    console.log(response.data)
+    return response;
+  } catch (error) {
+    console.error('Error fetching booking:', error);
     throw error;
   }
 };

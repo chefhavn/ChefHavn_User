@@ -46,6 +46,7 @@ const HomeScreen = ({navigation}) => {
       if (user?.id) {
         try {
           const response = await getRecentBookingByUserId(user.id);
+          console.log(response)
           if (response.success) {
             setRecentOrder(response.booking);
           } else {
@@ -143,7 +144,6 @@ const HomeScreen = ({navigation}) => {
           </View>
         </>
       )}
-
       <FlatList
         data={images}
         // renderItem={renderItem}
@@ -177,11 +177,11 @@ const HomeScreen = ({navigation}) => {
             </View>
             <TouchableOpacity
               style={styles.viewOrderButton}
-              // onPress={() =>
-              //   navigation.navigate('ViewOrderScreen', {
-              //     orderId: recentOrder.orderId,
-              //   })
-              // }
+              onPress={() =>
+                navigation.navigate('ViewOrderScreen', {
+                  orderId: recentOrder._id,
+                })
+              }
               >
               <Text style={styles.viewOrderButtonText}>View Order</Text>
             </TouchableOpacity>
@@ -227,14 +227,14 @@ const styles = StyleSheet.create({
   },
   header: {
     width: '100%',
-    height: 60,
+    height: 70,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    // elevation: 4,
+    paddingBottom: 10,
     fontFamily: 'Montserrat-Regular',
+    backgroundColor: Colors.WHITE,
   },
   sliderImage: {
     width: 370,
@@ -355,9 +355,8 @@ const styles = StyleSheet.create({
   sectionHeaderServices: {
     flexDirection: 'row',
     alignItems: 'flex-center',
-    // marginVertical: 10,
     marginTop: 15,
-    width: '90%',
+    width: '92%',
   },
   sectionHeaderServicesText: {
     fontSize: 18,
